@@ -24,7 +24,7 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                         return (
                             <div
                                 key={image.id}
-                                className={`image-card ${viewMode === 'single' ? 'feed-card' : ''}`}
+                                className={`image-card ${viewMode === 'single' ? 'feed-card' : ''} ${image.status === 'APPROVED' ? 'approved' : ''}`}
                                 onClick={() => handleImageClick(image)}
                                 style={{ cursor: 'pointer' }}
                             >
@@ -35,7 +35,11 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                         style={{
                                             opacity: image.status === 'processing' ? 0.5 : 1,
                                             filter: isBlurred ? 'blur(20px)' : 'none',
-                                            userSelect: 'none'
+                                            userSelect: 'none',
+                                            minHeight: isBlurred ? '300px' : 'auto',
+                                            objectFit: isBlurred ? 'cover' : 'initial',
+                                            width: '100%',
+                                            display: 'block'
                                         }}
                                         draggable={false}
                                     />
@@ -53,7 +57,8 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                             color: 'white',
                                             cursor: 'pointer',
                                             userSelect: 'none',
-                                            gap: '0.75rem'
+                                            gap: '0.75rem',
+                                            padding: '2rem'
                                         }}>
                                             <EyeOff size={48} strokeWidth={1.5} />
                                             <div style={{
@@ -78,9 +83,6 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                                     e.stopPropagation();
                                                     // Open lightbox with blurred image
                                                     setLightboxImage(image);
-
-                                                    // Open lightbox with blurred image
-                                                    setLightboxImage(image);
                                                 }}
                                                 style={{
                                                     marginTop: '0.5rem',
@@ -99,36 +101,6 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                             >
                                                 See Photo
                                             </button>
-                                        </div>
-                                    )}
-
-                                    {/* Status Badge - only show if status exists */}
-                                    {image.status && (
-                                        <div className={`status-badge status-${image.status}`} style={{
-                                            backgroundColor: image.status === 'APPROVED' ? 'rgba(0,0,0,0.6)' :
-                                                image.status === 'PROCESSING' ? 'rgba(251, 191, 36, 0.9)' :
-                                                    image.status === 'BLURRED' ? 'rgba(251, 191, 36, 0.9)' :
-                                                        'rgba(248, 113, 113, 0.9)',
-                                            color: (image.status === 'PROCESSING' || image.status === 'BLURRED') ? 'black' : 'white'
-                                        }}>
-                                            {image.status === 'PROCESSING' && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                    <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
-                                                    <span>Processing</span>
-                                                </div>
-                                            )}
-                                            {image.status === 'APPROVED' && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                    <CheckCircle size={12} />
-                                                    <span>Approved</span>
-                                                </div>
-                                            )}
-                                            {image.status === 'BLURRED' && !unblurredImages.has(image.id) && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                    <EyeOff size={12} />
-                                                    <span>Sensitive</span>
-                                                </div>
-                                            )}
                                         </div>
                                     )}
                                 </div>
