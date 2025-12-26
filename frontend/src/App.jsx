@@ -120,7 +120,14 @@ function App() {
 
             // Add to feed ONLY if not blocked (blocked images should never be shown)
             if (imageStatus.status !== 'BLOCKED') {
-              setImages(prev => [imageStatus, ...prev]);
+              setImages(prev => {
+                // Check if image already exists (might have been added by auto-polling)
+                const exists = prev.some(img => img.id === imageStatus.id);
+                if (exists) {
+                  return prev; // Don't add duplicate
+                }
+                return [imageStatus, ...prev];
+              });
             }
 
             // Update stats (optimistic update or fetch new stats)
