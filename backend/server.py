@@ -252,4 +252,4 @@ if __name__ == '__main__':
     print("Starting standalone backend server on port 3000...")
     print(f"Using Bucket: {os.environ.get('S3_BUCKET_NAME')}")
     print(f"Using Region: {os.environ.get('AWS_REGION')}")
-    app.run(port=3000, debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
