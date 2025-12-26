@@ -14,7 +14,20 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+
+# Configure CORS to allow frontend domain
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://localhost:5173",  # Local development
+            "http://momo.rishikesh.info.np",  # Production HTTP
+            "https://momo.rishikesh.info.np"  # Production HTTPS
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 @app.route('/api/generate-presigned-url', methods=['GET'])
 def generate_presigned_url():
