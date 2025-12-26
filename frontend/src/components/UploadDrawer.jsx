@@ -156,7 +156,7 @@ const UploadDrawer = ({ isOpen, onClose, onUpload, processingState }) => {
                             Tap to select from computer
                         </p>
                         <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                            Click here or drag and drop your photo here
+                            Click here or drop your photo
                         </p>
                     </div>
                 )}
