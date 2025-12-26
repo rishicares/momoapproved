@@ -1,4 +1,5 @@
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'http://localhost:3000/api'; // Replace with real API Gateway URL
+console.log("Current API_ENDPOINT:", API_ENDPOINT);
 
 export const getPresignedUrl = async (fileType) => {
   // In a real app, you would fetch this from your Lambda/API Gateway
