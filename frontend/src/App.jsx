@@ -51,7 +51,15 @@ function App() {
 
         if (newImages && newImages.length > 0) {
           console.log(`Found ${newImages.length} new image(s)`);
-          setImages(prev => [...newImages, ...prev]);
+          // Filter out duplicates by checking existing IDs
+          setImages(prev => {
+            const existingIds = new Set(prev.map(img => img.id));
+            const uniqueNewImages = newImages.filter(img => !existingIds.has(img.id));
+            if (uniqueNewImages.length > 0) {
+              return [...uniqueNewImages, ...prev];
+            }
+            return prev;
+          });
         }
 
         if (newStats) setStats(newStats);
