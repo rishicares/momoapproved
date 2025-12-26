@@ -1,21 +1,21 @@
-const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || 'http://localhost:3000/api'; // Replace with real API Gateway URL
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || '/api'; // Default to relative path for proxy
 console.log("Current API_ENDPOINT:", API_ENDPOINT);
 
 export const getPresignedUrl = async (fileType) => {
   // In a real app, you would fetch this from your Lambda/API Gateway
   // For now, we'll simulate it or if VITE_API_ENDPOINT is set, try to call it.
   
-  if (!import.meta.env.VITE_API_ENDPOINT) {
-    console.warn("VITE_API_ENDPOINT not set. Using mock response.");
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          uploadUrl: 'https://mock-s3-bucket.s3.amazonaws.com/upload', // Fake URL
-          fileId: `mock-${Date.now()}`
-        });
-      }, 500);
-    });
-  }
+  // if (!import.meta.env.VITE_API_ENDPOINT) {
+  //   console.warn("VITE_API_ENDPOINT not set. Using mock response.");
+  //   return new Promise((resolve) => {
+  //     setTimeout(() => {
+  //       resolve({
+  //         uploadUrl: 'https://mock-s3-bucket.s3.amazonaws.com/upload', // Fake URL
+  //         fileId: `mock-${Date.now()}`
+  //       });
+  //     }, 500);
+  //   });
+  // }
 
   const response = await fetch(`${API_ENDPOINT}/generate-presigned-url?contentType=${encodeURIComponent(fileType)}`);
   if (!response.ok) {
@@ -50,10 +50,10 @@ export const uploadToS3 = async (file, presignedUrl) => {
 };
 
 export const listImages = async (afterTimestamp = null) => {
-  if (!import.meta.env.VITE_API_ENDPOINT) {
-    console.warn("VITE_API_ENDPOINT not set. Using mock response.");
-    return { images: [] };
-  }
+  // if (!import.meta.env.VITE_API_ENDPOINT) {
+  //   console.warn("VITE_API_ENDPOINT not set. Using mock response.");
+  //   return { images: [] };
+  // }
 
   let url = `${API_ENDPOINT}/list-images`;
   if (afterTimestamp) {
@@ -68,10 +68,10 @@ export const listImages = async (afterTimestamp = null) => {
 };
 
 export const getImageStatus = async (key) => {
-  if (!import.meta.env.VITE_API_ENDPOINT) {
-    console.warn("VITE_API_ENDPOINT not set. Using mock response.");
-    return { status: null };
-  }
+  // if (!import.meta.env.VITE_API_ENDPOINT) {
+  //   console.warn("VITE_API_ENDPOINT not set. Using mock response.");
+  //   return { status: null };
+  // }
 
   const response = await fetch(`${API_ENDPOINT}/get-image-status?key=${encodeURIComponent(key)}`);
   if (response.status === 404) {
