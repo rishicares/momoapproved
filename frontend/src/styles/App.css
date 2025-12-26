@@ -125,8 +125,8 @@
 
 .image-card {
     break-inside: avoid;
-    margin-bottom: 0.75rem;
-    /* Uniform spacing matching column-gap */
+    margin-bottom: 1.5rem;
+    /* Match desktop column-gap */
     border-radius: 0.5rem;
     overflow: hidden;
     background-color: hsl(var(--card));
@@ -138,10 +138,18 @@
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
 }
 
+/* Match margin-bottom to column-gap at each breakpoint */
+@media (max-width: 768px) {
+    .image-card {
+        margin-bottom: 0.75rem;
+        /* Match tablet/mobile column-gap */
+    }
+}
+
 @media (max-width: 480px) {
     .image-card {
         margin-bottom: 0.5rem;
-        /* Match the smaller column-gap on mobile */
+        /* Match small phone column-gap */
     }
 }
 
