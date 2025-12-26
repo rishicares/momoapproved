@@ -129,23 +129,23 @@ const ProcessingTracker = ({ currentStep, uploadProgress, finalStatus, reason })
         }
         .step-label {
           font-weight: 500;
-          color: #374151;
+          color: #1f2937; /* Darker gray-800 for better contrast */
         }
         .tracker-step.current .step-label {
-          color: #111827;
+          color: #111827; /* gray-900 */
           font-weight: 600;
         }
         .tracker-step.completed .step-label {
-          color: #374151;
+          color: #4b5563; /* gray-600 */
         }
         .step-sublabel {
           font-size: 0.875rem;
-          color: #6b7280;
+          color: #374151; /* Darker gray-700 for better readability */
           margin-top: 0.25rem;
         }
         .upload-progress {
             font-size: 0.75rem;
-            color: #6b7280;
+            color: #4b5563; /* Darker gray-600 */
             margin-left: 0.5rem;
         }
         
