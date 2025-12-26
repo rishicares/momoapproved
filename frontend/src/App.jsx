@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import Navbar from './components/Navbar';
 import ImageFeed from './components/ImageFeed';
-import UploadModal from './components/UploadModal';
-import { getPresignedUrl, uploadToS3, listImages } from './api/s3';
+import UploadDrawer from './components/UploadDrawer';
+import { getPresignedUrl, uploadToS3, listImages, getImageStatus } from './api/s3';
 import './styles/App.css';
 
 function App() {
@@ -12,15 +12,27 @@ function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'single'
 
+  const [processingState, setProcessingState] = useState({
+    isProcessing: false,
+    step: 1,
+    uploadProgress: 0,
+    finalStatus: null,
+    reason: null
+  });
+
+  const [error, setError] = useState(null);
+
   // Load images from S3 on mount
   useEffect(() => {
     const fetchImages = async () => {
       try {
+        setError(null);
         const { images, stats } = await listImages();
         setImages(images);
         if (stats) setStats(stats);
       } catch (error) {
         console.error("Failed to load images:", error);
+        setError(error.message);
         // Fallback to empty array if fetch fails
         setImages([]);
       }
@@ -31,47 +43,87 @@ function App() {
 
   const handleUpload = async (file) => {
     try {
+      setProcessingState(prev => ({ ...prev, isProcessing: true, step: 1, uploadProgress: 0 }));
+
       // 1. Get Presigned URL
       const { uploadUrl, fileId } = await getPresignedUrl(file.type);
 
       // 2. Upload to S3
+      // Simulate upload progress
+      const uploadInterval = setInterval(() => {
+        setProcessingState(prev => {
+          if (prev.uploadProgress >= 90) return prev;
+          return { ...prev, uploadProgress: prev.uploadProgress + 10 };
+        });
+      }, 100);
+
       await uploadToS3(file, uploadUrl);
 
-      // 3. Close modal immediately
-      setIsUploadModalOpen(false);
+      clearInterval(uploadInterval);
+      setProcessingState(prev => ({ ...prev, uploadProgress: 100, step: 2 }));
+
+      // Simulate steps 2, 3, 4 with timeouts
+      // Simulate steps 2, 3, 4 with timeouts
+      // Step 2 (Lambda): 1.5s
+      // Step 3 (Rekognition): 4.5s (Increased duration as requested)
+      setTimeout(() => {
+        setProcessingState(prev => {
+          if (prev.finalStatus) return prev; // Don't update if already finished
+          return { ...prev, step: 3 };
+        });
+      }, 1500);
+
+      setTimeout(() => {
+        setProcessingState(prev => {
+          if (prev.finalStatus) return prev; // Don't update if already finished
+          return { ...prev, step: 4 };
+        });
+      }, 6000);
 
       // 4. Start Polling for the new image
-      // Poll every 3 seconds for 30 seconds max
+      // Poll every 1 second for 60 seconds max
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 60;
       const intervalId = setInterval(async () => {
         attempts++;
         console.log(`Polling for updates (attempt ${attempts})...`);
 
         try {
-          const { images: newImages, stats: newStats } = await listImages();
+          // Check status of the specific file directly
+          const imageStatus = await getImageStatus(fileId);
 
-          // Update state
-          setImages(newImages);
-          if (newStats) setStats(newStats);
-
-          // Check if our fileId is in the list (meaning it's approved/blurred)
-          // Note: fileId from getPresignedUrl matches the S3 key
-          const found = newImages.some(img => img.id === fileId);
-
-          if (found || attempts >= maxAttempts) {
+          if (imageStatus && imageStatus.status && ['APPROVED', 'BLURRED', 'BLOCKED'].includes(imageStatus.status)) {
             clearInterval(intervalId);
-            if (found) console.log("New image found!");
-            else console.log("Polling timed out.");
+            console.log("New image found!", imageStatus);
+
+            // Add to feed
+            setImages(prev => [imageStatus, ...prev]);
+
+            // Update stats (optimistic update or fetch new stats)
+            // For now, let's just fetch new stats to be accurate
+            listImages().then(({ stats }) => {
+              if (stats) setStats(stats);
+            });
+
+            setProcessingState(prev => ({
+              ...prev,
+              step: 5,
+              finalStatus: imageStatus.status,
+              reason: imageStatus.reason
+            }));
+          } else if (attempts >= maxAttempts) {
+            clearInterval(intervalId);
+            console.log("Polling timed out.");
           }
         } catch (err) {
           console.error("Polling error:", err);
         }
-      }, 3000);
+      }, 1000);
 
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Failed to upload image. Please try again.");
+      setProcessingState(prev => ({ ...prev, isProcessing: false }));
     }
   };
 
@@ -79,7 +131,6 @@ function App() {
     <div className="app">
       <Navbar viewMode={viewMode} setViewMode={setViewMode} />
 
-      {/* Stats Bar */}
       {/* Stats Bar */}
       <div className="container">
         <div className="stats-bar">
@@ -93,23 +144,44 @@ function App() {
         </div>
       </div>
 
+      {error && (
+        <div className="container" style={{ marginTop: '1rem', color: 'red', textAlign: 'center' }}>
+          Error loading images: {error}
+        </div>
+      )}
+
       <main>
         <ImageFeed images={images} viewMode={viewMode} />
       </main>
 
       {/* Floating Action Button for Upload */}
-      <button
-        className="fab-upload"
-        onClick={() => setIsUploadModalOpen(true)}
-        title="Upload Image"
-      >
-        <Plus size={32} strokeWidth={2.5} />
-      </button>
+      {!isUploadModalOpen && (
+        <button
+          className="fab-upload"
+          onClick={() => setIsUploadModalOpen(true)}
+          title="Upload Image"
+        >
+          <Plus size={32} strokeWidth={2.5} />
+        </button>
+      )}
 
-      <UploadModal
+      <UploadDrawer
         isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          // Reset state after close
+          setTimeout(() => {
+            setProcessingState({
+              isProcessing: false,
+              step: 1,
+              uploadProgress: 0,
+              finalStatus: null,
+              reason: null
+            });
+          }, 300);
+        }}
         onUpload={handleUpload}
+        processingState={processingState}
       />
     </div>
   );

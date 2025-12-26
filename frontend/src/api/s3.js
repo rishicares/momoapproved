@@ -48,15 +48,36 @@ export const uploadToS3 = async (file, presignedUrl) => {
   return response;
 };
 
-export const listImages = async () => {
+export const listImages = async (afterTimestamp = null) => {
   if (!import.meta.env.VITE_API_ENDPOINT) {
     console.warn("VITE_API_ENDPOINT not set. Using mock response.");
     return { images: [] };
   }
 
-  const response = await fetch(`${API_ENDPOINT}/list-images`);
+  let url = `${API_ENDPOINT}/list-images`;
+  if (afterTimestamp) {
+    url += `?after=${afterTimestamp}`;
+  }
+
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch images');
   }
   return response.json(); // Returns { images: [], stats: {} }
+};
+
+export const getImageStatus = async (key) => {
+  if (!import.meta.env.VITE_API_ENDPOINT) {
+    console.warn("VITE_API_ENDPOINT not set. Using mock response.");
+    return { status: null };
+  }
+
+  const response = await fetch(`${API_ENDPOINT}/get-image-status?key=${encodeURIComponent(key)}`);
+  if (response.status === 404) {
+      return { status: null }; // Not ready yet
+  }
+  if (!response.ok) {
+    throw new Error('Failed to fetch image status');
+  }
+  return response.json();
 };

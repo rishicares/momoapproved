@@ -62,6 +62,58 @@ def generate_presigned_url():
         print(f"Error: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/get-image-status', methods=['GET'])
+def get_image_status():
+    BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
+    key = request.args.get('key')
+    
+    if not BUCKET_NAME or not key:
+        return jsonify({'error': 'Missing configuration or key'}), 400
+        
+    try:
+        region = os.environ.get('AWS_REGION', 'us-east-1')
+        s3_client = boto3.client('s3', region_name=region, config=Config(signature_version='s3v4'))
+        
+        # Fetch tags directly - NO CACHING for status check
+        tags_response = s3_client.get_object_tagging(Bucket=BUCKET_NAME, Key=key)
+        tags = {tag['Key']: tag['Value'] for tag in tags_response.get('TagSet', [])}
+        status = tags.get('status', None)
+        reason = tags.get('reason', None)
+        
+        # Generate URL
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': BUCKET_NAME,
+                'Key': key
+            },
+            ExpiresIn=3600
+        )
+        
+        # Get metadata for uploadedAt
+        # We can skip this if we just want status, but it's good for the frontend object
+        # head_object is fast
+        head = s3_client.head_object(Bucket=BUCKET_NAME, Key=key)
+        uploaded_at = head['LastModified'].isoformat()
+        timestamp = head['LastModified'].timestamp()
+        
+        return jsonify({
+            'id': key,
+            'status': status,
+            'reason': reason,
+            'url': url,
+            'uploadedAt': uploaded_at,
+            'timestamp': timestamp
+        })
+        
+    except ClientError as e:
+        # If 404, it might not be tagged yet or doesn't exist
+        print(f"AWS Error checking status for {key}: {e}")
+        return jsonify({'status': None, 'error': 'Image not found or not ready'}), 404
+    except Exception as e:
+        print(f"Error checking status: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 # In-memory cache: {etag: {'status': str, 'url': str, 'expires_at': float}}
 IMAGE_CACHE = {}
 
@@ -89,10 +141,21 @@ def list_images():
         }
         
         import time
+        from datetime import datetime
         current_time = time.time()
         
+        # Get 'after' timestamp from query params (optional)
+        after_timestamp = request.args.get('after')
+        
         if 'Contents' in response:
-            for obj in response['Contents']:
+            # Sort objects by LastModified descending (newest first)
+            sorted_objects = sorted(
+                response['Contents'], 
+                key=lambda x: x['LastModified'], 
+                reverse=True
+            )
+
+            for obj in sorted_objects:
                 stats['total'] += 1
                 etag = obj['ETag']
                 
@@ -107,8 +170,10 @@ def list_images():
                         tags_response = s3_client.get_object_tagging(Bucket=BUCKET_NAME, Key=obj['Key'])
                         tags = {tag['Key']: tag['Value'] for tag in tags_response.get('TagSet', [])}
                         status = tags.get('status', None)
+                        reason = tags.get('reason', None) # Extract reason
                     except:
                         status = None
+                        reason = None
                     
                     # Generate presigned GET URL (valid for 1 hour)
                     url = s3_client.generate_presigned_url(
@@ -127,6 +192,7 @@ def list_images():
                     
                     IMAGE_CACHE[etag] = {
                         'status': status,
+                        'reason': reason,
                         'url': url,
                         'expires_at': current_time + ttl
                     }
@@ -148,11 +214,29 @@ def list_images():
                 if not status or status == 'BLOCKED' or status == 'PROCESSING':
                     continue
                 
+                # Filter by timestamp if 'after' param is present
+                if after_timestamp:
+                    try:
+                        # Convert both to timestamps for comparison
+                        # S3 LastModified is a datetime object with timezone info
+                        obj_ts = obj['LastModified'].timestamp()
+                        after_ts = float(after_timestamp)
+                        
+                        # Only include if newer than 'after'
+                        if obj_ts <= after_ts:
+                            continue
+                    except (ValueError, TypeError) as e:
+                        print(f"Error comparing timestamps: {e}")
+                        # If error, include it to be safe
+                        pass
+
                 images.append({
                     'id': obj['Key'],
                     'url': url,
                     'status': status,
-                    'uploadedAt': obj['LastModified'].isoformat()
+                    'reason': cached_data.get('reason') if cached_data else reason,
+                    'uploadedAt': obj['LastModified'].isoformat(),
+                    'timestamp': obj['LastModified'].timestamp() # Add timestamp for easier frontend comparison
                 })
         
         return jsonify({'images': images, 'stats': stats})

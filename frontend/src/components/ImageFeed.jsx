@@ -74,7 +74,7 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                                 textAlign: 'center',
                                                 maxWidth: '200px'
                                             }}>
-                                                This photo may contain sensitive content
+                                                {image.reason ? image.reason : 'This photo may contain sensitive content'}
                                             </div>
                                             <button
                                                 type="button"
@@ -148,7 +148,7 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                 <EyeOff size={64} strokeWidth={1.5} />
                                 <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>Sensitive Content</div>
                                 <p style={{ maxWidth: '300px', textAlign: 'center', opacity: 0.9 }}>
-                                    This photo contains sensitive content.
+                                    {lightboxImage.reason ? lightboxImage.reason : 'This photo contains sensitive content.'}
                                 </p>
                                 <button
                                     onClick={(e) => {
