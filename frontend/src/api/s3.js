@@ -1,5 +1,5 @@
-const API_ENDPOINT = '/api'; // Always use relative path to use the proxy
-console.log("Forced API_ENDPOINT:", API_ENDPOINT);
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT || '/api';
+console.log("Using API_ENDPOINT:", API_ENDPOINT, "from env:", import.meta.env.VITE_API_ENDPOINT);
 
 export const getPresignedUrl = async (fileType) => {
   // In a real app, you would fetch this from your Lambda/API Gateway
