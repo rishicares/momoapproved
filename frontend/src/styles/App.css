@@ -65,15 +65,16 @@
 @media (max-width: 768px) {
     .image-grid {
         column-count: 2;
-        /* Enforce 2 columns */
-        gap: 0.75rem;
+        /* Enforce 2 columns minimum on smartphones */
+        column-gap: 0.75rem;
     }
 }
 
+/* Even on very small phones, keep 2 columns for better layout */
 @media (max-width: 480px) {
     .image-grid {
-        column-count: 1;
-        gap: 1rem;
+        column-count: 2;
+        column-gap: 0.5rem;
     }
 }
 
