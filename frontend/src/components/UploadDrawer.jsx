@@ -93,7 +93,7 @@ const UploadDrawer = ({ isOpen, onClose, onUpload, processingState }) => {
                 }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
                         {processingState.isProcessing ? 'Processing Upload' : 'Upload Photo'}
                     </h2>
                     {!processingState.isProcessing && (
