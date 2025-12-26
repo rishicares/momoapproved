@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, Circle, Loader2, AlertCircle } from 'lucide-react';
+import { getReasonMessage } from '../constants/moderation';
 
 const steps = [
   { id: 1, label: 'Uploading image to S3 bucket' },
@@ -43,11 +44,11 @@ const ProcessingTracker = ({ currentStep, uploadProgress, finalStatus, reason })
             } else if (finalStatus === 'BLURRED') {
               label = 'Blurred';
               icon = <AlertCircle className="step-icon blurred" size={20} />;
-              subLabel = reason ? `Reason: ${reason}` : 'Sensitive content detected';
+              subLabel = getReasonMessage(reason);
             } else if (finalStatus === 'BLOCKED') {
               label = 'Blocked';
               icon = <AlertCircle className="step-icon blocked" size={20} />;
-              subLabel = reason ? `Reason: ${reason}` : 'Content violation';
+              subLabel = getReasonMessage(reason);
             }
           } else if (isCurrent) {
             label = 'Finalizing...';

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle, Loader2, X, EyeOff } from 'lucide-react';
+import { getReasonMessage } from '../constants/moderation';
 
 const ImageFeed = ({ images, viewMode = 'grid' }) => {
     const [lightboxImage, setLightboxImage] = useState(null);
@@ -74,7 +75,7 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                                 textAlign: 'center',
                                                 maxWidth: '200px'
                                             }}>
-                                                {image.reason ? image.reason : 'This photo may contain sensitive content'}
+                                                {getReasonMessage(image.reason)}
                                             </div>
                                             <button
                                                 type="button"
@@ -148,7 +149,7 @@ const ImageFeed = ({ images, viewMode = 'grid' }) => {
                                 <EyeOff size={64} strokeWidth={1.5} />
                                 <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>Sensitive Content</div>
                                 <p style={{ maxWidth: '300px', textAlign: 'center', opacity: 0.9 }}>
-                                    {lightboxImage.reason ? lightboxImage.reason : 'This photo contains sensitive content.'}
+                                    {getReasonMessage(lightboxImage.reason)}
                                 </p>
                                 <button
                                     onClick={(e) => {
