@@ -125,7 +125,8 @@
 
 .image-card {
     break-inside: avoid;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
+    /* Uniform spacing matching column-gap */
     border-radius: 0.5rem;
     overflow: hidden;
     background-color: hsl(var(--card));
@@ -135,6 +136,13 @@
     background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
         linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)) border-box;
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 480px) {
+    .image-card {
+        margin-bottom: 0.5rem;
+        /* Match the smaller column-gap on mobile */
+    }
 }
 
 .image-card:hover {

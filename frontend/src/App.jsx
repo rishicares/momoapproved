@@ -41,6 +41,28 @@ function App() {
     fetchImages();
   }, []);
 
+  // Auto-poll for new images every second
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      try {
+        // Get timestamp of newest image
+        const latestTimestamp = images.length > 0 ? images[0].timestamp : null;
+        const { images: newImages, stats: newStats } = await listImages(latestTimestamp);
+
+        if (newImages && newImages.length > 0) {
+          console.log(`Found ${newImages.length} new image(s)`);
+          setImages(prev => [...newImages, ...prev]);
+        }
+
+        if (newStats) setStats(newStats);
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    }, 1000); // Poll every second
+
+    return () => clearInterval(pollInterval);
+  }, [images]);
+
   const handleUpload = async (file) => {
     try {
       setProcessingState(prev => ({ ...prev, isProcessing: true, step: 1, uploadProgress: 0 }));
@@ -96,8 +118,10 @@ function App() {
             clearInterval(intervalId);
             console.log("New image found!", imageStatus);
 
-            // Add to feed
-            setImages(prev => [imageStatus, ...prev]);
+            // Add to feed ONLY if not blocked (blocked images should never be shown)
+            if (imageStatus.status !== 'BLOCKED') {
+              setImages(prev => [imageStatus, ...prev]);
+            }
 
             // Update stats (optimistic update or fetch new stats)
             // For now, let's just fetch new stats to be accurate
