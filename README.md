@@ -1,0 +1,4 @@
+# Demo Application
+1. APPROVED
+3. BLURRED
+4. BLOCKED
